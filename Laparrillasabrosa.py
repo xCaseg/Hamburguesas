@@ -29,12 +29,6 @@ class Administrador(Usuario):
         super().__init__(nombre)
         self.administrador = True
 
-#MÉTODOS ADMINISTRADOR
-    #def ver_stock(self, tienda):
-        #print("Stock disponible:")
-        #for numero, hamburguesa in tienda.hamburguesas.items():
-            #print(f"{numero}. {hamburguesa.nombre} - Stock: {hamburguesa.stock}")
-
 #-----------------------CLASE HAMBURGUESA---------------------------#
 class Hamburguesa:
     

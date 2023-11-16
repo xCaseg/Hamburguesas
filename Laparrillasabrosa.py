@@ -1,44 +1,28 @@
-#-----------------------CLASE USUARIO----------------------------------#
-class Usuario:
-
-#CONSTRUCTOR USUARIO / ATRIBUTOS    
+#-----------------------CLASE Cliente---------------------------#
+class Cliente:
     def __init__(self, nombre):
         self.nombre = nombre
         self.carrito = []
-        
-#MÉTODOS USUARIO
 
-    def comprar_hamburguesa(self, hamburguesa, cantidad):
-        self.carrito.append((hamburguesa, cantidad))
+    def comprar_producto(self, producto, cantidad):
+        self.carrito.append((producto, cantidad))
+
 
     def ver_carrito(self):
         if len(self.carrito) > 0:
-            print("\n")
-            print("Usted ordenó: ")
-            for hamburguesa, cantidad in self.carrito:
-                print(f"{hamburguesa} ({cantidad})")
+            print("\nUsted ordenó:")
+            for producto, cantidad in self.carrito:
+                print(f"{producto.nombre} ({cantidad})")
         else:
             print(f"El carrito de {self.nombre} está vacío.")
 
-#-----------------------CLASE ADMINISTRADOR---------------------------#
-
-class Administrador(Usuario):
-
-#CONSTRUCTOR ADMINISTRADOR / ATRIBUTOS     
-    def __init__(self, nombre):
-        super().__init__(nombre)
-        self.administrador = True
-
-#-----------------------CLASE HAMBURGUESA---------------------------#
-class Hamburguesa:
-    
-#CONSTRUCTOR HAMBURGUESAS / ATRIBUTOS     
+#-----------------------CLASE PRODUCTO BASE---------------------------#
+class ProductoBase:
     def __init__(self, nombre, precio, stock_inicial):
         self.nombre = nombre
         self.precio = precio
         self.stock = stock_inicial
 
-#MÉTODOS HAMBURGUESAS
     def comprar(self, cantidad):
         if self.stock >= cantidad:
             self.stock -= cantidad
@@ -46,12 +30,20 @@ class Hamburguesa:
         else:
             return False
 
+#-----------------------CLASE HAMBURGUESA---------------------------#
+class Hamburguesa(ProductoBase):
+    pass
+
+class Bebida(ProductoBase):
+    pass
+
+class Papas(ProductoBase):
+    pass
+
 #---------------------CLASE TIENDA DE HAMBURGUESAS--------------------#
-class TiendaHamburguesas:
-    
-#CONSTRUCTOR TIENDA DE HAMBURGUESAS / ATRIBUTOS (INICIALIZADOS)   
+class Tienda:
     def __init__(self):
-        self.usuarios = {}
+        self.cliente = Cliente("Cliente")
         self.hamburguesas = {
             1: Hamburguesa("Hamburguesa Clásica", 65, 100),
             2: Hamburguesa("Hamburguesa de Pollo", 70, 100),
@@ -63,86 +55,132 @@ class TiendaHamburguesas:
             8: Hamburguesa("Hamburguesa Hawaiana", 125, 100),
             9: Hamburguesa("Hamburguesa Ibérica", 100, 100),
             10: Hamburguesa("Hamburguesa Arrachera", 133, 100)
+            # ... (otras hamburguesas)
         }
 
-#MÉTODOS TIENDA DE HAMBURGUESAS
-    def agregar_usuario(self, nombre, es_administrador=False):
-        if es_administrador:
-            usuario = Administrador(nombre)
-        else:
-            usuario = Usuario(nombre)
-        self.usuarios[nombre] = usuario
+        self.bebidas = {
+            1: Bebida("Refresco grande", 60, 100),
+            2: Bebida("Refresco mediano", 40, 100),
+            3: {"nombre": "Refresco chico", "precio": 25, "stock": 100},
+            
+            # ... (otras bebidas)
+        }
 
-    def mostrar_menu(self, usuario):
-        print("\n")
-        print("¡Bienvenido a la Parrilla sabrosa!\n")
+        self.papas = {
+           1: Papas("Papas grandes", 60, 100),
+           2: Papas("Papas medianas", 40, 100),
+           3: {"nombre": "Papas chicas", "precio": 25, "stock": 100},
+           # ... (otras papas)
+        }
+
+    def mostrar_menu(self):
+        print("\n¡Bienvenido a la Parrilla sabrosa!\n")
         print("Menú:\n")
+        print("Hamburguesas:\n")
         for numero, hamburguesa in self.hamburguesas.items():
             print(f"{numero}. {hamburguesa.nombre}: ${hamburguesa.precio}")
+            
+        print("\nBebidas:\n")    
+        for numero, bebida in self.bebidas.items():
+            if isinstance(bebida, Bebida):
+                print(f"{numero}. {bebida.nombre}: ${bebida.precio}")
+            elif isinstance(bebida, dict):
+                print(f"{numero}. {bebida['nombre']}: ${bebida['precio']}")
+                
+        print("\nPapas:\n")
+        for numero, papa in self.papas.items():
+            if isinstance(papa, Papas):
+                print(f"{numero}. {papa.nombre}: ${papa.precio}")
+            elif isinstance(papa, dict):
+                print(f"{numero}. {papa['nombre']}: ${papa['precio']}")
 
-    def ver_carrito(self, usuario):
-        if usuario in self.usuarios:
-            self.usuarios[usuario].ver_carrito()
-        else:
-            print(f"Usuario {usuario} no encontrado.")
+    def comprar_producto(self, categoria, numero, cantidad):
+        productos = None
+        if categoria == "hamburguesas":
+            productos = self.hamburguesas
+        elif categoria == "bebidas":
+            productos = self.bebidas
+        elif categoria == "papas":
+            productos = self.papas
 
-    def comprar_hamburguesa(self, usuario, numero, cantidad):
-        if usuario in self.usuarios:
-            hamburguesa = self.hamburguesas.get(numero)
-            if hamburguesa:
-                if hamburguesa.comprar(cantidad):
-                    self.usuarios[usuario].comprar_hamburguesa(hamburguesa.nombre, cantidad)
-                    print(f"¡Se han agregado {cantidad} {hamburguesa.nombre} al carrito!")
+        if productos:
+            producto = productos.get(numero)
+            if producto:
+                if isinstance(producto, ProductoBase):
+                    if producto.comprar(cantidad):
+                        self.cliente.comprar_producto(producto, cantidad)
+                        print(f"¡Se han agregado {cantidad} {producto.nombre} al carrito!")
+                    else:
+                        print(f"Lo sentimos, no hay suficiente stock de {producto.nombre}.")
+                elif isinstance(producto, dict):
+                    nombre = producto.get('nombre', f"{categoria[:-1]} no válido")
+                    if 'precio' in producto:
+                        self.cliente.comprar_producto(producto, cantidad)
+                        print(f"¡Se han agregado {cantidad} {nombre} al carrito!")
+                    else:
+                        print(f"{nombre} no tiene un precio definido.")
                 else:
-                    print(f"Lo sentimos, no hay suficiente stock de {hamburguesa.nombre}.")
+                    print(f"El número de {categoria[:-1]} ingresado no es válido. Por favor, seleccione un número válido.")
             else:
-                print("El tipo de hamburguesa que eligió no es válido. Por favor, selecciona un número de hamburguesa válido.")
+                print(f"El número de {categoria[:-1]} ingresado no es válido. Por favor, seleccione un número válido.")
         else:
-            print(f"Usuario {usuario} no encontrado.")
+            print("Categoría de producto no válida.")
+
+# Método para confirmar la compra
+def confirmar_compra():
+    while True:
+        respuesta = input("¿Desea confirmar la compra? (s/n): ").lower()
+        if respuesta in ["s", "si"]:
+            print(f"\n¡Gracias por su compra, {tienda.cliente.nombre}!")
+            break
+        elif respuesta in ["n", "no"]:
+            print("\nCompra cancelada.")
+            break
+        else:
+            print("Respuesta no válida. Por favor, ingrese 's' para confirmar o 'n' para cancelar.")
 
 
-#--------------------------------INSTANCIAS------------------------------#
 
-# 1.- Tienda
-tienda = TiendaHamburguesas()
+# Instanciar la tienda
+tienda = Tienda()
 
-# 2.- Agregar usuarios
-tienda.agregar_usuario("cliente")
-tienda.agregar_usuario("admin", es_administrador=True)
+# Mostrar el menú
+tienda.mostrar_menu()
 
-# 3.- Mostrar el menú de hamburguesas (Cliente)
-tienda.mostrar_menu("cliente")
-
-# MÉTODO PARA SOLICITAR AL USUARIO
-
+# Bucle principal para realizar pedidos
 while True:
     try:
         print("\n")
-        numero = int(input("Elija la hamburguesa que desea comprar (inserte '0' para concluir su orden): "))
-        if numero == 0:
-            break
-        cantidad = int(input("¿Cuántas hamburguesas desea?: "))
-        tienda.comprar_hamburguesa("cliente", numero, cantidad)      
-        while True:
-            respuesta = input("¿Desea ordenar otra hamburguesa? (S/N): ")
-            if respuesta in ["s", "S"]:
-                break  # Continuar ordenando
-            elif respuesta in ["n", "N"]:
+        categoria = input("Elija la categoría de producto que desea comprar (hamburguesas/bebidas/papas/0 para concluir la orden): ")
+
+        if categoria == "0":
+            break  # Finalizar la orden
+
+        elif categoria in ["hamburguesas", "bebidas", "papas"]:
+            numero = int(input(f"Elija el número del producto de {categoria} que desea comprar (inserte '0' para concluir su orden): "))
+
+            if numero == 0:
                 break  # Finalizar la orden
-            else:
-                print("Por favor, ingrese 'S' o 'N'.")
-        
-        if respuesta in ["n", "N"]:
-            break  
+
+            cantidad = int(input("¿Cuántos productos desea?: "))
+            tienda.comprar_producto(categoria, numero, cantidad)
+
+        else:
+            print("Categoría de producto no válida.")
+
     except ValueError:
         print("Por favor, ingrese un número válido.")
 
-
-# 4.- Calcular el total de la compra
+# Calcular el total de la compra
 total = 0
-for hamburguesa, cantidad in tienda.usuarios["cliente"].carrito:
-    precio = next(h.precio for n, h in tienda.hamburguesas.items() if h.nombre == hamburguesa)
-    total += precio * cantidad
+print("\nDetalles de la compra:\n")
+for producto, cantidad in tienda.cliente.carrito:
+    precio_unitario = producto.precio
+    precio_total = precio_unitario * cantidad
+    total += precio_total
+    print(f"{cantidad} {producto.nombre} x ${precio_unitario} c/u = ${precio_total}")
 
-print(f"Total de la compra: ${total}")
+print(f"\nTotal de la compra: ${total}")
 
+# Confirmar la compra
+confirmar_compra()
